@@ -1,5 +1,5 @@
 use crate::token::Token;
-use crate::ast::{Expr, BinOp};
+use crate::ast::{Expr, BinOp, UnaryOp};
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -49,7 +49,11 @@ impl Parser {
 
     fn parse_factor(&mut self) -> Expr {
         match self.advance() {
-            Token::Number(n) => Expr::Number(n),
+            Token::Minus => {
+                let operand = self.parse_factor();
+                Expr::Unary(UnaryOp::Negate, Box::new(operand))
+            },
+            Token::Int(n) => Expr::Int(n),
             Token::LeftParen => {
                 let inner = self.parse_expr();
                 match self.advance() {

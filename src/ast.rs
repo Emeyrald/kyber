@@ -8,7 +8,14 @@ pub enum BinOp {
 }
 
 #[derive(Debug)]
+pub enum UnaryOp {
+    Negate,
+}
+
+#[derive(Debug)]
 pub enum Expr {
-    Number(i32),
+    Int(i64),
+    Float(f64),
     Binary(BinOp, Box<Expr>, Box<Expr>),
+    Unary(UnaryOp, Box<Expr>),
 }

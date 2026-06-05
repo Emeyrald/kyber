@@ -19,7 +19,7 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                 while let Some(&('0'..='9')) = chars.peek() {
                     digits.push(chars.next().unwrap());
                 }
-                tokens.push(Token::Number(digits.parse().unwrap()));
+                tokens.push(Token::Int(digits.parse().unwrap()));
             },
             ' ' | '\t' | '\n' => {},
             _ => panic!("unexpected character: {}", ch),

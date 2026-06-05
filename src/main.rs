@@ -1,8 +1,9 @@
 mod token;
 mod lexer;
 mod parser;
-mod evaluator;
 mod ast;
+mod evaluator;
+mod value;
 
 use crate::token::Token;
 use crate::parser::Parser;
@@ -26,5 +27,5 @@ fn run(source: &str) {
     let mut parser = Parser::new(tokens);
     let tree = parser.parse_expr();
     let result = evaluator::eval(&tree);
-    println!("{}", result);
+    println!("{:?}", result);
 }
