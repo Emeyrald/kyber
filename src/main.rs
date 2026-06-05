@@ -7,12 +7,24 @@ mod ast;
 use crate::token::Token;
 use crate::parser::Parser;
 
+use std::io::Write;
+
 fn main() {
-    let tokens: Vec<Token> = lexer::tokenize("(2 + 3) * 4");
-    println!("{:?}", tokens);
+    loop {
+        print!("> ");
+        std::io::stdout().flush().expect("failed to flush");
+        let mut input = String::new();
+        std::io::stdin().read_line(&mut input).expect("failed to read line");
+        let trimmed = input.trim();
+        if trimmed == "exit" { break; }
+        run(trimmed);
+    }
+}
+
+fn run(source: &str) {
+    let tokens: Vec<Token> = lexer::tokenize(source);
     let mut parser = Parser::new(tokens);
     let tree = parser.parse_expr();
-    println!("{:?}", tree);
     let result = evaluator::eval(&tree);
     println!("{}", result);
 }
