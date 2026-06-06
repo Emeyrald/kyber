@@ -1,8 +1,9 @@
 mod token;
 mod lexer;
 mod parser;
-mod evaluator;
 mod ast;
+mod evaluator;
+mod value;
 
 use crate::token::Token;
 use crate::parser::Parser;
