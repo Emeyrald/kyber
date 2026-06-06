@@ -54,6 +54,7 @@ impl Parser {
                 Expr::Unary(UnaryOp::Negate, Box::new(operand))
             },
             Token::Int(n) => Expr::Int(n),
+            Token::Float(f) => Expr::Float(f),
             Token::LeftParen => {
                 let inner = self.parse_expr();
                 match self.advance() {

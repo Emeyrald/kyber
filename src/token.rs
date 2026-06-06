@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy)]
 pub enum Token {
     Int(i64),
+    Float(f64),
     Plus,
     Minus,
     Star,
