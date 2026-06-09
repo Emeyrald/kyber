@@ -64,10 +64,11 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "const" => tokens.push(Token::Const),
                     "int" => tokens.push(Token::IntType),
                     "float" => tokens.push(Token::FloatType),
+                    "print" => tokens.push(Token::Print),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
 
-            }
+            },
             ' ' | '\t' | '\n' => {},
 
             // Lexer only errors on chars that can't start any token. Bad ordering (e.g. leading operator) is the parser's concern, not caught here.

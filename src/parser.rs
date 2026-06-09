@@ -28,30 +28,41 @@ impl Parser {
     }
 
     fn parse_statement(&mut self) -> Stmt {
-        let statement = if self.peek() == &Token::Let || self.peek() == &Token::Const {
-            let is_mutable = match self.advance() {
-                Token::Let => true,
-                Token::Const => false,
-                _ => unreachable!("checked above"),
-            };
-            let declared_type = match self.advance() {
-                Token::IntType => Type::Int,
-                Token::FloatType => Type::Float,
-                _ => panic!("expected type"),
-            };
-            let name = match self.advance() {
-                Token::Identifier(name) => name,
-                _ => panic!("expected variable name"),
-            };
-            self.expect(Token::Equals);
-            let expr = self.parse_expr();
-            self.expect(Token::Semicolon);
+        let statement = match self.peek() {
+            &Token::Let | &Token::Const => {
+                let is_mutable = match self.advance() {
+                    Token::Let => true,
+                    Token::Const => false,
+                    _ => unreachable!("checked above"),
+                };
+                let declared_type = match self.advance() {
+                    Token::IntType => Type::Int,
+                    Token::FloatType => Type::Float,
+                    _ => panic!("expected type"),
+                };
+                let name = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => panic!("expected variable name"),
+                };
+                self.expect(Token::Equals);
+                let expr = self.parse_expr();
+                self.expect(Token::Semicolon);
 
-            Stmt::Declaration { is_mutable, declared_type, name, value: expr }
-        } else {
-            let expr = self.parse_expr();
-            self.expect(Token::Semicolon);
-            Stmt::Expr(expr)
+                Stmt::Declaration { is_mutable, declared_type, name, value: expr }
+            },
+            &Token::Print => {
+                self.advance();
+                self.expect(Token::LeftParen);
+                let expr = self.parse_expr();
+                self.expect(Token::RightParen);
+                self.expect(Token::Semicolon);
+                Stmt::Print(expr)
+            },
+            _ => {
+                let expr = self.parse_expr();
+                self.expect(Token::Semicolon);
+                Stmt::Expr(expr)
+            },
         };
         statement
     }

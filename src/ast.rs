@@ -40,5 +40,6 @@ pub enum Stmt {
         name: String,
         value: Expr,
     },
+    Print(Expr),
     Expr(Expr),
 }

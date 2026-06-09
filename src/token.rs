@@ -1,7 +1,7 @@
 // Token: the lexical units of Kyber source. The lexer produces these; the parser consumes them.
 
 // Eof is appended by the lexer so the parser always has a current token to inspect, avoiding end-of-list bounds checks.
-// Copy so the parser's advance() can return a token by value without borrowing self.
+// Clone so the parser's advance() can return a token by value without borrowing self.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Int(i64),
@@ -21,4 +21,5 @@ pub enum Token {
     Equals,
     Semicolon,
     Identifier(String),
+    Print,
 }
