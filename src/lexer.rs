@@ -13,7 +13,16 @@ pub fn tokenize(source: &str) -> Vec<Token> {
             '+' => tokens.push(Token::Plus),
             '-' => tokens.push(Token::Minus),
             '*' => tokens.push(Token::Star),
-            '/' => tokens.push(Token::Slash),
+            '/' => {
+                if let Some('/') = chars.peek() {
+                    while let Some(c) = chars.peek() {
+                        if *c == '\n' { break; }
+                        chars.next();
+                    }
+                } else {
+                    tokens.push(Token::Slash)
+                }
+            },
             '%' => tokens.push(Token::Modulo),
             '(' => tokens.push(Token::LeftParen),
             ')' => tokens.push(Token::RightParen),
@@ -67,12 +76,11 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "print" => tokens.push(Token::Print),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
-
             },
-            ' ' | '\t' | '\n' => {},
+            ' ' | '\t' | '\n' | '\r' => {},
 
             // Lexer only errors on chars that can't start any token. Bad ordering (e.g. leading operator) is the parser's concern, not caught here.
-            _ => panic!("unexpected character: {}", ch),
+            _ => panic!("unexpected character: {:?}", ch),
         }
     }
 
