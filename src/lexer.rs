@@ -49,6 +49,25 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     tokens.push(Token::Int(digits.parse().unwrap()));
                 }
             },
+            '=' => tokens.push(Token::Equals),
+            ';' => tokens.push(Token::Semicolon),
+            'a'..='z' | 'A'..'Z' | '_' => {
+                let mut identifier_string = String::new();
+                
+                identifier_string.push(ch);
+                while let Some('a'..='z' | 'A'..='Z' | '_' | '0'..='9') = chars.peek() {
+                    identifier_string.push(chars.next().unwrap());
+                }
+
+                match identifier_string.as_str() {
+                    "let" => tokens.push(Token::Let),
+                    "const" => tokens.push(Token::Const),
+                    "int" => tokens.push(Token::IntType),
+                    "float" => tokens.push(Token::FloatType),
+                    _ => tokens.push(Token::Identifier(identifier_string)),
+                }
+
+            }
             ' ' | '\t' | '\n' => {},
 
             // Lexer only errors on chars that can't start any token. Bad ordering (e.g. leading operator) is the parser's concern, not caught here.

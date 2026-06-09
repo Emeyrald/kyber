@@ -1,7 +1,8 @@
 // Parser: turns the token stream into an AST. Recursive descent — one function per precedence level.
 
 use crate::token::Token;
-use crate::ast::{Expr, BinOp, UnaryOp};
+use crate::ast::{Stmt, Expr, BinOp, UnaryOp};
+use crate::value::Type;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -16,10 +17,49 @@ impl Parser {
         }
     }
 
+    pub fn parse_program(&mut self) -> Vec<Stmt> {
+        let mut statements: Vec<Stmt> = Vec::new();
+        loop {
+            if self.peek() == &Token::Eof { break; }
+
+            statements.push(self.parse_statement());
+        }
+        statements
+    }
+
+    fn parse_statement(&mut self) -> Stmt {
+        let statement = if self.peek() == &Token::Let || self.peek() == &Token::Const {
+            let is_mutable = match self.advance() {
+                Token::Let => true,
+                Token::Const => false,
+                _ => unreachable!("checked above"),
+            };
+            let declared_type = match self.advance() {
+                Token::IntType => Type::Int,
+                Token::FloatType => Type::Float,
+                _ => panic!("expected type"),
+            };
+            let name = match self.advance() {
+                Token::Identifier(name) => name,
+                _ => panic!("expected variable name"),
+            };
+            self.expect(Token::Equals);
+            let expr = self.parse_expr();
+            self.expect(Token::Semicolon);
+
+            Stmt::Declaration { is_mutable, declared_type, name, value: expr }
+        } else {
+            let expr = self.parse_expr();
+            self.expect(Token::Semicolon);
+            Stmt::Expr(expr)
+        };
+        statement
+    }
+
     // Precedence via call hierarchy: parse_expr (+ -) calls parse_term (* / %) calls parse_factor (atoms). 
     // Each level handles only its own operators and delegates to the level below for operands, so tighter-binding operators end up deeper in the tree. 
     // Left-associative: each new op folds the running result into the left child.
-    pub fn parse_expr(&mut self) -> Expr {
+    fn parse_expr(&mut self) -> Expr {
         let mut left = self.parse_term();
 
         loop {
@@ -55,7 +95,7 @@ impl Parser {
     fn parse_factor(&mut self) -> Expr {
         match self.advance() {
             // Unary minus parses a FACTOR (not a full expr) as its operand, so it binds tightly: -2 * 3 is (-2)*3, not -(2*3).
-            // A '-' reaching parse_factor is in operand position → unary. A '-' in parse_expr's loop is in operator position → binary subtraction. 
+            // A '-' reaching parse_factor is in operand position -> unary. A '-' in parse_expr's loop is in operator position -> binary subtraction. 
             // Position disambiguates; no explicit check needed.
             Token::Minus => {
                 let operand = self.parse_factor();
@@ -72,6 +112,7 @@ impl Parser {
                     _ => panic!("expected ')'"),
                 }
             },
+            Token::Identifier(name) => Expr::Variable(name),
             _ => panic!("expected number or '('"),
         }
     }
@@ -81,10 +122,17 @@ impl Parser {
         &self.tokens[self.position]
     }
 
-    // Returns current token by value (copy) and advances. Returns by value, not reference, to avoid borrowing self while also mutating it.
+    // Returns current token by value (clone) and advances. Returns by value, not reference, to avoid borrowing self while also mutating it.
     fn advance(&mut self) -> Token {
         let pos = self.position;
         self.position += 1;
-        self.tokens[pos]
+        self.tokens[pos].clone()
+    }
+
+    fn expect(&mut self, expected: Token) {
+        let actual = self.advance();
+        if actual != expected {
+            panic!("expected {:?}, found {:?}", expected, actual);
+        }
     }
 }
