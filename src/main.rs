@@ -10,20 +10,11 @@ mod environment;
 
 use crate::token::Token;
 use crate::parser::Parser;
-use crate::environment::{Variable, Environment};
-use crate::ast::{BinOp, Expr};
-use crate::value::{Value, Type};
+use crate::environment::Environment;
 
 use std::io::Write;
 
 fn main() {
-    // TEMP: hand-built AST to test variable lookup (Stage A). Remove once the parser can produce Variable nodes.
-    // let mut env = Environment::new();
-    // env.define("x".to_string(), Variable::new(Value::Int(5), true, Type::Int));
-    // let expr = Expr::Binary(BinOp::Add, Box::new(Expr::Variable("x".to_string())), Box::new(Expr::Int(3)));
-    // let result = evaluator::eval(&expr, &env);
-    // println!("{}", result);
-    
     let mut env = Environment::new();
     // Read-Eval-Print-Loop: prompt, read a line, run it, repeat. 'exit' breaks. 
     // (Note: bad input currently panics and kills the loop — fixed when adding error handling.)
@@ -39,7 +30,7 @@ fn main() {
     }
 }
 
-// Runs one line of Kyber source through the full pipeline: tokenize -> parse -> eval -> print.
+// Runs lines of Kyber source through the full pipeline: tokenize -> parse -> eval -> print.
 fn run(source: &str, env: &mut Environment) {
     let tokens: Vec<Token> = lexer::tokenize(source);
     let mut parser = Parser::new(tokens);
