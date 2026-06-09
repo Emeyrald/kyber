@@ -67,7 +67,8 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
             let evaluated_value = eval(value, env);
             env.define(name.to_string(), Variable::new(evaluated_value, *is_mutable, declared_type.clone()));
         },
-        Stmt::Expr(expr) => println!("{}", eval(expr, env)),
+        Stmt::Print(expr) => println!("{}", eval(expr, env)),
+        Stmt::Expr(expr) => { eval(expr, env); },
     }
 }
 
