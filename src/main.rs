@@ -15,18 +15,27 @@ use crate::environment::Environment;
 use std::io::Write;
 
 fn main() {
+    let args = std::env::args().collect::<Vec<String>>();
     let mut env = Environment::new();
-    // Read-Eval-Print-Loop: prompt, read a line, run it, repeat. 'exit' breaks. 
-    // (Note: bad input currently panics and kills the loop — fixed when adding error handling.)
-    loop {
-        print!("> ");
-        // print! doesn't flush automatically, so flush to make the prompt appear before reading input.
-        std::io::stdout().flush().expect("failed to flush");
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input).expect("failed to read line");
-        let trimmed = input.trim();
-        if trimmed == "exit" { break; }
-        run(trimmed, &mut env);
+    match args.get(1) {
+        Some(path) => {
+            let file = std::fs::read_to_string(path).expect("could not read file");
+            run(&file, &mut env);
+        },
+        None => {
+            // Read-Eval-Print-Loop: prompt, read a line, run it, repeat. 'exit' breaks. 
+            // (Note: bad input currently panics and kills the loop — fixed when adding error handling.)
+            loop {
+                print!("> ");
+                // print! doesn't flush automatically, so flush to make the prompt appear before reading input.
+                std::io::stdout().flush().expect("failed to flush");
+                let mut input = String::new();
+                std::io::stdin().read_line(&mut input).expect("failed to read line");
+                let trimmed = input.trim();
+                if trimmed == "exit" { break; }
+                run(trimmed, &mut env);
+            }
+        }
     }
 }
 
