@@ -14,6 +14,7 @@ pub enum BinOp {
 #[derive(Debug)]
 pub enum UnaryOp {
     Negate,
+    Not,
 }
 
 // An Expr is anything that produces a value. 
@@ -22,6 +23,7 @@ pub enum UnaryOp {
 pub enum Expr {
     Int(i64),
     Float(f64),
+    Bool(bool),
 
     // Variable holds only the variable's name (syntax). 
     // Resolving it to a value happens at eval time via the environment — the AST never holds runtime data.

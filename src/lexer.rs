@@ -60,6 +60,7 @@ pub fn tokenize(source: &str) -> Vec<Token> {
             },
             '=' => tokens.push(Token::Equals),
             ';' => tokens.push(Token::Semicolon),
+            '!' => tokens.push(Token::Not),
             'a'..='z' | 'A'..'Z' | '_' => {
                 let mut identifier_string = String::new();
                 
@@ -73,6 +74,9 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "const" => tokens.push(Token::Const),
                     "int" => tokens.push(Token::IntType),
                     "float" => tokens.push(Token::FloatType),
+                    "bool" => tokens.push(Token::BoolType),
+                    "true" => tokens.push(Token::True),
+                    "false" => tokens.push(Token::False),
                     "print" => tokens.push(Token::Print),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }

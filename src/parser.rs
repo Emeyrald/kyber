@@ -38,6 +38,7 @@ impl Parser {
                 let declared_type = match self.advance() {
                     Token::IntType => Type::Int,
                     Token::FloatType => Type::Float,
+                    Token::BoolType => Type::Bool,
                     _ => panic!("expected type"),
                 };
                 let name = match self.advance() {
@@ -112,8 +113,14 @@ impl Parser {
                 let operand = self.parse_factor();
                 Expr::Unary(UnaryOp::Negate, Box::new(operand))
             },
+            Token::Not => {
+                let value = self.parse_factor();
+                Expr::Unary(UnaryOp::Not, Box::new(value))
+            }
             Token::Int(n) => Expr::Int(n),
             Token::Float(f) => Expr::Float(f),
+            Token::True => Expr::Bool(true),
+            Token::False => Expr::Bool(false),
 
             // Parens don't become a node — they only force grouping, which the tree shape already captures. Returns the inner expression directly.
             Token::LeftParen => {

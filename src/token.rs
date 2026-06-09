@@ -18,8 +18,12 @@ pub enum Token {
     Const,
     IntType,
     FloatType,
+    BoolType,
     Equals,
     Semicolon,
     Identifier(String),
     Print,
+    True,
+    False,
+    Not,
 }

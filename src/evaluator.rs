@@ -10,6 +10,7 @@ pub fn eval(expr: &Expr, env: &Environment) -> Value {
     match expr {
         Expr::Int(n) => Value::Int(*n),
         Expr::Float(f) => Value::Float(*f),
+        Expr::Bool(b) => Value::Bool(*b),
 
         // Look the name up in the environment and return its stored value.
         Expr::Variable(name) => env.get(name),
@@ -45,17 +46,11 @@ pub fn eval(expr: &Expr, env: &Environment) -> Value {
         },
         Expr::Unary(op, operand) => {
             let operand_value = eval(operand, env);
-            match &operand_value {
-                Value::Int(n) => {
-                    match op {
-                        UnaryOp::Negate => Value::Int(-*n),
-                    }
-                },
-                Value::Float(f) => {
-                    match op {
-                        UnaryOp::Negate => Value::Float(-*f),
-                    }
-                }
+            match (op, &operand_value) {
+                (UnaryOp::Negate, Value::Int(n)) => Value::Int(-*n),
+                (UnaryOp::Negate, Value::Float(f)) => Value::Float(-*f),
+                (UnaryOp::Not, Value::Bool(b)) => Value::Bool(!*b),
+                _ => panic!("type error: can't apply this operator to this type")
             }  
         },
     }
@@ -77,5 +72,6 @@ fn to_f64(v: &Value) -> f64 {
     match v {
         Value::Int(n) => *n as f64,
         Value::Float(f) => *f,
+        _ => panic!("expected int or float"),
     }
 }
