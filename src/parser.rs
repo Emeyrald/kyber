@@ -4,6 +4,7 @@ use crate::token::Token;
 use crate::ast::{Stmt, Expr, BinOp, UnaryOp};
 use crate::value::Type;
 
+#[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
     position: usize,
@@ -24,6 +25,18 @@ impl Parser {
 
             statements.push(self.parse_statement());
         }
+        statements
+    }
+
+    fn parse_block(&mut self) -> Vec<Stmt> {
+        self.expect(Token::LeftBrace);
+        let mut statements: Vec<Stmt> = Vec::new();
+        loop {
+            if self.peek() == &Token::RightBrace { break; }
+
+            statements.push(self.parse_statement());
+        }
+        self.expect(Token::RightBrace);
         statements
     }
 
@@ -59,6 +72,25 @@ impl Parser {
                 self.expect(Token::Semicolon);
                 Stmt::Print(expr)
             },
+            &Token::If => {
+                self.advance();
+                self.expect(Token::LeftParen);
+                let condition = self.parse_comparison();
+                self.expect(Token::RightParen);
+                let then_branch = self.parse_block();
+                let else_branch = if self.peek() == &Token::Else {
+                    self.advance();
+                    if self.peek() == &Token::If {
+                        Some(Box::new(self.parse_statement()))
+                    } else {
+                        Some(Box::new(Stmt::Block(self.parse_block())))
+                    }
+                    
+                } else {
+                    None
+                };
+                Stmt::If { condition, then_branch, else_branch }
+            }
             _ => {
                 let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
@@ -152,7 +184,7 @@ impl Parser {
                 }
             },
             Token::Identifier(name) => Expr::Variable(name),
-            _ => panic!("expected number or '('"),
+            _ => panic!("expected number or '(', found {:?}", self),
         }
     }
 

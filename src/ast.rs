@@ -42,6 +42,13 @@ pub enum Stmt {
         name: String,
         value: Expr,
     },
+    If {
+        condition: Expr,
+        then_branch: Vec<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
+
+    Block(Vec<Stmt>),
     Print(Expr),
     Expr(Expr),
 }

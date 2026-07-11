@@ -26,6 +26,8 @@ pub fn tokenize(source: &str) -> Vec<Token> {
             '%' => tokens.push(Token::Modulo),
             '(' => tokens.push(Token::LeftParen),
             ')' => tokens.push(Token::RightParen),
+            '{' => tokens.push(Token::LeftBrace),
+            '}' => tokens.push(Token::RightBrace),
 
             // Numbers span multiple chars, so gobble consecutive digits. 
             // A '.' followed by more digits makes it a float; '3.' or '.5' are rejected (must be 3.0 / 0.5).
@@ -112,6 +114,8 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "true" => tokens.push(Token::True),
                     "false" => tokens.push(Token::False),
                     "print" => tokens.push(Token::Print),
+                    "if" => tokens.push(Token::If),
+                    "else" => tokens.push(Token::Else),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
             },

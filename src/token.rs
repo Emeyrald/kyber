@@ -17,13 +17,13 @@ pub enum Token {
     Not,
 
     // Keywords
-    Let, Const, Print,
+    Let, Const, Print, If, Else,
 
     // Type keywords,
     IntType, FloatType, BoolType,
 
     // Punctuation / delimiters
-    LeftParen, RightParen, Equals, Semicolon,
+    LeftParen, RightParen, Equals, Semicolon, LeftBrace, RightBrace,
 
     // Special
     Eof,

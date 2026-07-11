@@ -101,8 +101,32 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
             let evaluated_value = eval(value, env);
             env.define(name.to_string(), Variable::new(evaluated_value, *is_mutable, declared_type.clone()));
         },
+        Stmt::If { condition, then_branch, else_branch } => { 
+            let condition_value = eval(condition, env);
+            match condition_value {
+                Value::Bool(b) => { 
+                    if b {
+                        eval_block(then_branch, env);
+                    } else {
+                        if let Some(stmt) = else_branch {
+                            eval_stmt(stmt, env);
+                        }
+                    }
+                },
+                _ => panic!("expected boolean for condition"),
+            }
+        },
+        Stmt::Block(statements) => {
+            eval_block(statements, env);
+        }
         Stmt::Print(expr) => println!("{}", eval(expr, env)),
         Stmt::Expr(expr) => { eval(expr, env); },
+    }
+}
+
+fn eval_block(statements: &[Stmt], env: &mut Environment) {
+    for statement in statements {
+        eval_stmt(statement, env);
     }
 }
 
