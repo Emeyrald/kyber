@@ -7,12 +7,14 @@ use std::fmt;
 pub enum Value {
     Int(i64),
     Float(f64),
+    Bool(bool),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     Int,
     Float,
+    Bool,
 }
 
 // Whole-number floats (5.0) print with a trailing .0 so the type is visible in output; ints never show a decimal. Fractional floats print as-is.
@@ -28,6 +30,7 @@ impl fmt::Display for Value {
                     write!(f, "{}", x)
                 }             
             },
+            Value::Bool(b) => write!(f, "{}", b),
         }
     }
 }

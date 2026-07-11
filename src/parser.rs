@@ -4,6 +4,7 @@ use crate::token::Token;
 use crate::ast::{Stmt, Expr, BinOp, UnaryOp};
 use crate::value::Type;
 
+#[derive(Debug)]
 pub struct Parser {
     tokens: Vec<Token>,
     position: usize,
@@ -27,6 +28,18 @@ impl Parser {
         statements
     }
 
+    fn parse_block(&mut self) -> Vec<Stmt> {
+        self.expect(Token::LeftBrace);
+        let mut statements: Vec<Stmt> = Vec::new();
+        loop {
+            if self.peek() == &Token::RightBrace { break; }
+
+            statements.push(self.parse_statement());
+        }
+        self.expect(Token::RightBrace);
+        statements
+    }
+
     fn parse_statement(&mut self) -> Stmt {
         let statement = match self.peek() {
             &Token::Let | &Token::Const => {
@@ -38,6 +51,7 @@ impl Parser {
                 let declared_type = match self.advance() {
                     Token::IntType => Type::Int,
                     Token::FloatType => Type::Float,
+                    Token::BoolType => Type::Bool,
                     _ => panic!("expected type"),
                 };
                 let name = match self.advance() {
@@ -45,7 +59,7 @@ impl Parser {
                     _ => panic!("expected variable name"),
                 };
                 self.expect(Token::Equals);
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
 
                 Stmt::Declaration { is_mutable, declared_type, name, value: expr }
@@ -53,13 +67,32 @@ impl Parser {
             &Token::Print => {
                 self.advance();
                 self.expect(Token::LeftParen);
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::RightParen);
                 self.expect(Token::Semicolon);
                 Stmt::Print(expr)
             },
+            &Token::If => {
+                self.advance();
+                self.expect(Token::LeftParen);
+                let condition = self.parse_comparison();
+                self.expect(Token::RightParen);
+                let then_branch = self.parse_block();
+                let else_branch = if self.peek() == &Token::Else {
+                    self.advance();
+                    if self.peek() == &Token::If {
+                        Some(Box::new(self.parse_statement()))
+                    } else {
+                        Some(Box::new(Stmt::Block(self.parse_block())))
+                    }
+                    
+                } else {
+                    None
+                };
+                Stmt::If { condition, then_branch, else_branch }
+            }
             _ => {
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
                 Stmt::Expr(expr)
             },
@@ -67,6 +100,27 @@ impl Parser {
         statement
     }
 
+    fn parse_comparison(&mut self) -> Expr {
+        let mut left = self.parse_expr();
+
+        loop {
+            let op = match self.peek() {
+                &Token::Less => BinOp::Less,
+                &Token::Greater => BinOp::Greater,
+                &Token::LessEqual => BinOp::LessEqual,
+                &Token::GreaterEqual => BinOp::GreaterEqual,
+                &Token::EqualEqual => BinOp::EqualEqual,
+                &Token::NotEqual => BinOp::NotEqual,
+                _ => break,
+            };
+            self.advance();
+            let right = self.parse_expr();
+            left = Expr::Binary(op, Box::new(left), Box::new(right));
+        }
+        left
+    }
+
+    
     // Precedence via call hierarchy: parse_expr (+ -) calls parse_term (* / %) calls parse_factor (atoms). 
     // Each level handles only its own operators and delegates to the level below for operands, so tighter-binding operators end up deeper in the tree. 
     // Left-associative: each new op folds the running result into the left child.
@@ -112,19 +166,25 @@ impl Parser {
                 let operand = self.parse_factor();
                 Expr::Unary(UnaryOp::Negate, Box::new(operand))
             },
+            Token::Not => {
+                let value = self.parse_factor();
+                Expr::Unary(UnaryOp::Not, Box::new(value))
+            }
             Token::Int(n) => Expr::Int(n),
             Token::Float(f) => Expr::Float(f),
+            Token::True => Expr::Bool(true),
+            Token::False => Expr::Bool(false),
 
             // Parens don't become a node — they only force grouping, which the tree shape already captures. Returns the inner expression directly.
             Token::LeftParen => {
-                let inner = self.parse_expr();
+                let inner = self.parse_comparison();
                 match self.advance() {
                     Token::RightParen => inner,
                     _ => panic!("expected ')'"),
                 }
             },
             Token::Identifier(name) => Expr::Variable(name),
-            _ => panic!("expected number or '('"),
+            _ => panic!("expected number or '(', found {:?}", self),
         }
     }
 

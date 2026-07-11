@@ -4,16 +4,17 @@ use crate::value::Type;
 
 #[derive(Debug)]
 pub enum BinOp {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
+    // Arithmetic Operators
+    Add, Subtract, Multiply, Divide, Modulo,
+
+    // Comparison Operators
+    Less, Greater, LessEqual, GreaterEqual, EqualEqual, NotEqual,
 }
 
 #[derive(Debug)]
 pub enum UnaryOp {
     Negate,
+    Not,
 }
 
 // An Expr is anything that produces a value. 
@@ -22,6 +23,7 @@ pub enum UnaryOp {
 pub enum Expr {
     Int(i64),
     Float(f64),
+    Bool(bool),
 
     // Variable holds only the variable's name (syntax). 
     // Resolving it to a value happens at eval time via the environment — the AST never holds runtime data.
@@ -40,6 +42,13 @@ pub enum Stmt {
         name: String,
         value: Expr,
     },
+    If {
+        condition: Expr,
+        then_branch: Vec<Stmt>,
+        else_branch: Option<Box<Stmt>>,
+    },
+
+    Block(Vec<Stmt>),
     Print(Expr),
     Expr(Expr),
 }
