@@ -18,31 +18,70 @@ pub fn eval(expr: &Expr, env: &Environment) -> Value {
         Expr::Binary(op, left, right) => {
             let left_value = eval(left, env);
             let right_value = eval(right, env);
-            // Both operands int -> integer arithmetic (note: integer division truncates). Otherwise -> promote both to f64 and do float arithmetic. 
-            // This is the type-promotion rule.
-            // Match on references so we don't move the values — lets us reuse them (e.g. in to_f64) without requiring Value: Copy.
-            match (&left_value, &right_value) {
-                (Value::Int(l), Value::Int(r)) => {
-                    match op {
-                        BinOp::Add => Value::Int(l + r),
-                        BinOp::Subtract => Value::Int(l - r),
-                        BinOp::Multiply => Value::Int(l * r),
-                        BinOp::Divide => Value::Int(l / r),
-                        BinOp::Modulo => Value::Int(l % r),
+
+            match op {
+                // Arithmetic -> existing (Int,Int)/promote logic, produces number
+                BinOp::Add | BinOp::Subtract | BinOp::Multiply | BinOp::Divide | BinOp::Modulo => {
+                    match (&left_value, &right_value) {
+                        (Value::Int(l), Value::Int(r)) => {
+                            match op {
+                                BinOp::Add => Value::Int(l + r),
+                                BinOp::Subtract => Value::Int(l - r),
+                                BinOp::Multiply => Value::Int(l * r),
+                                BinOp::Divide => Value::Int(l / r),
+                                BinOp::Modulo => Value::Int(l % r),
+                                _ => unreachable!(),
+                            }
+                        },
+                        _ => {
+                            let l = to_f64(&left_value);
+                            let r = to_f64(&right_value);
+                            match op {
+                                BinOp::Add => Value::Float(l + r),
+                                BinOp::Subtract => Value::Float(l - r),
+                                BinOp::Multiply => Value::Float(l * r),
+                                BinOp::Divide => Value::Float(l / r),
+                                BinOp::Modulo => Value::Float(l % r),
+                                _ => unreachable!(),
+                            }
+                        }
                     }
                 },
-                _ => {
+                // Ordering comparisons -> always compare as f64, produce Bool
+                BinOp::Less | BinOp::Greater | BinOp::LessEqual | BinOp::GreaterEqual => {
                     let l = to_f64(&left_value);
                     let r = to_f64(&right_value);
                     match op {
-                        BinOp::Add => Value::Float(l + r),
-                        BinOp::Subtract => Value::Float(l - r),
-                        BinOp::Multiply => Value::Float(l * r),
-                        BinOp::Divide => Value::Float(l / r),
-                        BinOp::Modulo => Value::Float(l % r),
+                        BinOp::Less => Value::Bool(l < r),
+                        BinOp::Greater => Value::Bool(l > r),
+                        BinOp::LessEqual => Value::Bool(l <= r),
+                        BinOp::GreaterEqual => Value::Bool(l >= r),
+                        _ => unreachable!(),
                     }
-                }
-            }
+                },
+                // Equality -> works on numbers AND bools, produce Bool
+                BinOp::EqualEqual | BinOp::NotEqual => {
+                    match (&left_value, &right_value) {
+                        (Value::Bool(l), Value::Bool(r)) => {
+                            Value::Bool(match op { 
+                                BinOp::EqualEqual => l == r, 
+                                BinOp::NotEqual => l != r,
+                                _ => unreachable!(),
+                            })
+                        },
+                        (Value::Bool(_), _) | (_, Value::Bool(_)) => panic!("type error: can't compare bool with number"),
+                        _ => {
+                            let l = to_f64(&left_value);
+                            let r = to_f64(&right_value);
+                            Value::Bool(match op { 
+                                BinOp::EqualEqual => l == r, 
+                                BinOp::NotEqual => l != r,
+                                _ => unreachable!(),
+                            })
+                        }
+                    }
+                },
+            } 
         },
         Expr::Unary(op, operand) => {
             let operand_value = eval(operand, env);

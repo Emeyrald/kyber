@@ -4,11 +4,11 @@ use crate::value::Type;
 
 #[derive(Debug)]
 pub enum BinOp {
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-    Modulo,
+    // Arithmetic Operators
+    Add, Subtract, Multiply, Divide, Modulo,
+
+    // Comparison Operators
+    Less, Greater, LessEqual, GreaterEqual, EqualEqual, NotEqual,
 }
 
 #[derive(Debug)]

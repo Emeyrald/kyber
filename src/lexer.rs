@@ -58,9 +58,43 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     tokens.push(Token::Int(digits.parse().unwrap()));
                 }
             },
-            '=' => tokens.push(Token::Equals),
+            '=' => {
+                match chars.peek() {
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::EqualEqual);
+                    },
+                    _ => tokens.push(Token::Equals),
+                }
+            },
             ';' => tokens.push(Token::Semicolon),
-            '!' => tokens.push(Token::Not),
+            '!' => {
+                match chars.peek() {
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::NotEqual);
+                    },
+                    _ => tokens.push(Token::Not),
+                }
+            },
+            '<' => {
+                match chars.peek() {
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::LessEqual);
+                    },
+                    _ => tokens.push(Token::Less),
+                }
+            },
+            '>' => {
+                match chars.peek() {
+                    Some('=') => {
+                        chars.next();
+                        tokens.push(Token::GreaterEqual);
+                    },
+                    _ => tokens.push(Token::Greater),
+                }
+            },
             'a'..='z' | 'A'..'Z' | '_' => {
                 let mut identifier_string = String::new();
                 

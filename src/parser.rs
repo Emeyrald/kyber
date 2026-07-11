@@ -46,7 +46,7 @@ impl Parser {
                     _ => panic!("expected variable name"),
                 };
                 self.expect(Token::Equals);
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
 
                 Stmt::Declaration { is_mutable, declared_type, name, value: expr }
@@ -54,13 +54,13 @@ impl Parser {
             &Token::Print => {
                 self.advance();
                 self.expect(Token::LeftParen);
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::RightParen);
                 self.expect(Token::Semicolon);
                 Stmt::Print(expr)
             },
             _ => {
-                let expr = self.parse_expr();
+                let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
                 Stmt::Expr(expr)
             },
@@ -68,6 +68,27 @@ impl Parser {
         statement
     }
 
+    fn parse_comparison(&mut self) -> Expr {
+        let mut left = self.parse_expr();
+
+        loop {
+            let op = match self.peek() {
+                &Token::Less => BinOp::Less,
+                &Token::Greater => BinOp::Greater,
+                &Token::LessEqual => BinOp::LessEqual,
+                &Token::GreaterEqual => BinOp::GreaterEqual,
+                &Token::EqualEqual => BinOp::EqualEqual,
+                &Token::NotEqual => BinOp::NotEqual,
+                _ => break,
+            };
+            self.advance();
+            let right = self.parse_expr();
+            left = Expr::Binary(op, Box::new(left), Box::new(right));
+        }
+        left
+    }
+
+    
     // Precedence via call hierarchy: parse_expr (+ -) calls parse_term (* / %) calls parse_factor (atoms). 
     // Each level handles only its own operators and delegates to the level below for operands, so tighter-binding operators end up deeper in the tree. 
     // Left-associative: each new op folds the running result into the left child.
@@ -124,7 +145,7 @@ impl Parser {
 
             // Parens don't become a node — they only force grouping, which the tree shape already captures. Returns the inner expression directly.
             Token::LeftParen => {
-                let inner = self.parse_expr();
+                let inner = self.parse_comparison();
                 match self.advance() {
                     Token::RightParen => inner,
                     _ => panic!("expected ')'"),

@@ -4,26 +4,27 @@
 // Clone so the parser's advance() can return a token by value without borrowing self.
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
-    Int(i64),
-    Float(f64),
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Modulo,
-    LeftParen,
-    RightParen,
-    Eof,
-    Let,
-    Const,
-    IntType,
-    FloatType,
-    BoolType,
-    Equals,
-    Semicolon,
-    Identifier(String),
-    Print,
-    True,
-    False,
+    // Literals
+    Int(i64), Float(f64), True, False, Identifier(String),
+
+    // Arithmetic operators
+    Plus, Minus, Star, Slash, Modulo,
+
+    // Comparison operators
+    Less, Greater, LessEqual, GreaterEqual, EqualEqual, NotEqual,
+
+    //Logical operators
     Not,
+
+    // Keywords
+    Let, Const, Print,
+
+    // Type keywords,
+    IntType, FloatType, BoolType,
+
+    // Punctuation / delimiters
+    LeftParen, RightParen, Equals, Semicolon,
+
+    // Special
+    Eof,
 }
