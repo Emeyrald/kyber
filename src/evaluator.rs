@@ -1,7 +1,9 @@
-// Evaluator: walks an Expr tree and computes its Value. Takes the environment (read-only) to look up variables.
+// Evaluator: walks the AST and executes it. Two entry points:
+// - eval(expr, &Environment): computes an expression's Value (read-only - expressions don't mutate state).
+// - eval_stmt(stmt, &mut Environment): executes a statement (mutates the environment - declarations, assignments, and blocks push/pop scopes).
 
 use crate::ast::{Stmt, Expr, BinOp, UnaryOp};
-use crate::value::Value;
+use crate::value::{Value, Type};
 use crate::environment::{Environment, Variable};
 
 // Recursion over the tree: leaves (Int/Float/Variable) produce values directly; Binary/Unary evaluate children then combine. 
@@ -99,7 +101,12 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
     match stmt {
         Stmt::Declaration { is_mutable, declared_type, name, value } => {
             let evaluated_value = eval(value, env);
-            env.define(name.to_string(), Variable::new(evaluated_value, *is_mutable, declared_type.clone()));
+            let checked_value = declared_type.check_and_convert(name, evaluated_value);
+            env.define(name.to_string(), Variable::new(checked_value, *is_mutable, declared_type.clone()));
+        },
+        Stmt::Assignment { name, value } => {
+            let evaluated_value = eval(value, env);
+            env.assign(name.to_string(), evaluated_value);
         },
         Stmt::If { condition, then_branch, else_branch } => { 
             let condition_value = eval(condition, env);

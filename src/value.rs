@@ -34,3 +34,16 @@ impl fmt::Display for Value {
         }
     }
 }
+
+impl Type {
+    // Checks a value against a declared type, returning the value to store. Widens int->float; 
+    // errors on narrowing (float->int) or type mismatch. Used by both declaration and reassignment.
+    pub(crate) fn check_and_convert(&self, name: &str, value: Value) -> Value {
+        match (self, &value) {
+            (Type::Int, Value::Int(_)) | (Type::Float, Value::Float(_)) | (Type::Bool, Value::Bool(_)) => value,
+            (Type::Float, Value::Int(n)) => Value::Float(*n as f64),
+            (Type::Int, Value::Float(_)) => panic!("cannot assign float to int variable {} (use a cast to truncate)", name),
+            _ => panic!("type mismatch: cannot assign to {:?} variable {}", self, name),
+        }
+    }
+}
