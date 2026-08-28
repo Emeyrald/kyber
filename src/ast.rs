@@ -42,6 +42,10 @@ pub enum Stmt {
         name: String,
         value: Expr,
     },
+    Assignment {
+        name: String,
+        value: Expr,
+    },
     If {
         condition: Expr,
         then_branch: Vec<Stmt>,

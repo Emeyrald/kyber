@@ -64,6 +64,23 @@ impl Parser {
 
                 Stmt::Declaration { is_mutable, declared_type, name, value: expr }
             },
+            &Token::Identifier(_) => {
+                if self.tokens[self.position + 1] == Token::Equals {
+                    let name = match self.advance() {
+                        Token::Identifier(name) => name,
+                        _ => panic!("expected variable name"),
+                    };
+                    self.expect(Token::Equals);
+                    let expr = self.parse_comparison();
+                    self.expect(Token::Semicolon);
+
+                    Stmt::Assignment { name, value: expr }
+                } else {
+                    let expr = self.parse_comparison();
+                    self.expect(Token::Semicolon);
+                    Stmt::Expr(expr)
+                }
+            },
             &Token::Print => {
                 self.advance();
                 self.expect(Token::LeftParen);

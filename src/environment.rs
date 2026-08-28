@@ -1,4 +1,5 @@
-// Environment: runtime state — maps variable names to their stored Variable (value + mutability + declared type).
+// Environment: runtime variable storage as a stack of scopes. Each scope is a name→Variable map; 
+// entering a block pushes a scope, exiting pops it. Lookups and assignments search innermost-outward for lexical scoping.
 
 use crate::value::{Value, Type};
 use std::collections::HashMap;
@@ -31,7 +32,7 @@ impl Environment {
         }
     }
 
-    // get only reads (immutable borrow); define modifies the map (mutable borrow).
+    // get/assign search scopes innermost-outward; define inserts into the innermost scope.
     pub fn get(&self, name: &str) -> Value {
         for scope in self.scopes.iter().rev() {
             if let Some(var) = scope.get(name) {
@@ -50,6 +51,20 @@ impl Environment {
         }
         current_scope.insert(name, var);
         
+    }
+
+    // Reassignment: find the nearest scope with the name, enforce mutability and type, update in place. 
+    // Errors if const or undeclared.
+    pub fn assign(&mut self, name: String, new_value: Value) {
+        for scope in self.scopes.iter_mut().rev() {
+            if let Some(var) = scope.get_mut(&name) {
+                if !var.is_mutable { panic!("variable {} is const and cannot be reassigned", name) }
+                let checked = var.declared_type.check_and_convert(&name, new_value);
+                var.value = checked;
+                return;
+            }
+        }
+        panic!("cannot assign to undeclared variable {}", name)
     }
 
     pub fn push_scope(&mut self) {
