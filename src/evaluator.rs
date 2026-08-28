@@ -125,9 +125,11 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
 }
 
 fn eval_block(statements: &[Stmt], env: &mut Environment) {
+    env.push_scope();
     for statement in statements {
         eval_stmt(statement, env);
     }
+    env.pop_scope();
 }
 
 // Converts a Value to f64 for the float-promotion path: ints widen, floats pass through.

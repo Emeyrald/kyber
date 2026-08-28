@@ -21,27 +21,42 @@ impl Variable {
 }
 
 pub struct Environment {
-    variables: HashMap<String, Variable>,
-}
+    scopes: Vec<HashMap<String, Variable>>,
+}  
 
 impl Environment {
     pub fn new() -> Self {
         Self {
-            variables: HashMap::new(),
+            scopes: vec![HashMap::new()],
         }
     }
 
     // get only reads (immutable borrow); define modifies the map (mutable borrow).
     pub fn get(&self, name: &str) -> Value {
-        match self.variables.get(name) {
-            // Clone because the caller gets an owned Value while the environment keeps its copy.
-            Some(var) => var.value.clone(),
-            // Undefined variable is a panic for now; becomes a graceful error once Result-based error handling is added.
-            None => panic!("undefined variable: {}", name),
+        for scope in self.scopes.iter().rev() {
+            if let Some(var) = scope.get(name) {
+                // Clone because the caller gets an owned Value while the environment keeps its copy.
+                return var.value.clone();
+            }
         }
+        // Undefined variable is a panic for now; becomes a graceful error once Result-based error handling is added.
+        panic!("undefined variable: {}", name);
     }
 
     pub fn define(&mut self, name: String, var: Variable) {
-        self.variables.insert(name, var);
+        let current_scope = self.scopes.last_mut().unwrap();
+        if current_scope.contains_key(&name) {
+            panic!("variable {} is already declared in this scope", name);
+        }
+        current_scope.insert(name, var);
+        
+    }
+
+    pub fn push_scope(&mut self) {
+        self.scopes.push(HashMap::new());
+    }
+
+    pub fn pop_scope(&mut self) {
+        self.scopes.pop();
     }
 }
