@@ -10,20 +10,51 @@ pub fn tokenize(source: &str) -> Vec<Token> {
     let mut chars = source.chars().peekable();
     while let Some(ch) = chars.next() {
         match ch {
-            '+' => tokens.push(Token::Plus),
-            '-' => tokens.push(Token::Minus),
-            '*' => tokens.push(Token::Star),
+            '+' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::PlusEqual);
+                } else {
+                    tokens.push(Token::Plus);
+                }
+            },
+            '-' => {
+               if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::MinusEqual);
+                } else {
+                    tokens.push(Token::Minus);
+                } 
+            },
+            '*' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::StarEqual);
+                } else {
+                    tokens.push(Token::Star);
+                }
+            },
             '/' => {
                 if let Some('/') = chars.peek() {
                     while let Some(c) = chars.peek() {
                         if *c == '\n' { break; }
                         chars.next();
                     }
+                } else if let Some ('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::SlashEqual);
                 } else {
-                    tokens.push(Token::Slash)
+                    tokens.push(Token::Slash);
                 }
             },
-            '%' => tokens.push(Token::Modulo),
+            '%' => {
+                if let Some('=') = chars.peek() {
+                    chars.next();
+                    tokens.push(Token::ModuloEqual);
+                } else {
+                    tokens.push(Token::Modulo);
+                }
+            },
             '(' => tokens.push(Token::LeftParen),
             ')' => tokens.push(Token::RightParen),
             '{' => tokens.push(Token::LeftBrace),
