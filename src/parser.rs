@@ -102,12 +102,42 @@ impl Parser {
                     } else {
                         Some(Box::new(Stmt::Block(self.parse_block())))
                     }
-                    
                 } else {
                     None
                 };
                 Stmt::If { condition, then_branch, else_branch }
-            }
+            },
+            &Token::While => {
+                self.advance();
+                self.expect(Token::LeftParen);
+                let condition = self.parse_comparison();
+                self.expect(Token::RightParen);
+                let body = self.parse_block();
+                Stmt::While { condition, body }
+            },
+            &Token::For => {
+                self.advance();
+                let var = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => panic!("expected variable name after 'for'"),
+                };
+                self.expect(Token::In);
+                let start = self.parse_expr();
+                let inclusive = match self.advance() {
+                    Token::DotDot => false,
+                    Token::DotDotEqual => true,
+                    _ => panic!("expected '..' or '..=' in for loop"),
+                };
+                let end = self.parse_expr();
+                let step = if self.peek() == &Token::By {
+                    self.advance();
+                    Some(self.parse_expr())
+                } else {
+                    None
+                };
+                let body = self.parse_block();
+                Stmt::For { var, start, inclusive, end, step, body }
+            },
             _ => {
                 let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);

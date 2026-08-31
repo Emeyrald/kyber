@@ -31,31 +31,37 @@ pub fn tokenize(source: &str) -> Vec<Token> {
 
             // Numbers span multiple chars, so gobble consecutive digits. 
             // A '.' followed by more digits makes it a float; '3.' or '.5' are rejected (must be 3.0 / 0.5).
+            // A '..' is a range token.
             '0'..='9' => {
                 let mut digits = String::new();
-
-                // Tracks whether a '.' was seen, to decide Int vs Float parsing at the end.
-                let mut is_float = false;
 
                 digits.push(ch);
                 while let Some(&('0'..='9')) = chars.peek() {
                     digits.push(chars.next().unwrap());
                 }
 
+                // Look for '.'. Could be a decimal point or the start of '..' or '..='
                 if let Some('.') = chars.peek() {
-                    is_float = true;
-                    digits.push(chars.next().unwrap());
-                    if let Some(&('0'..='9')) = chars.peek() {
+                    chars.next();
+                    if let Some('.') = chars.peek() {
+                        chars.next();
+                        tokens.push(Token::Int(digits.parse().unwrap()));
+                        if let Some('=') = chars.peek() {
+                            chars.next();
+                            tokens.push(Token::DotDotEqual);
+                        } else {
+                            tokens.push(Token::DotDot);
+                        }   
+                    } else {
+                        digits.push('.');
+                        let mut got_fractional = false;
                         while let Some(&('0'..='9')) = chars.peek() {
                             digits.push(chars.next().unwrap());
+                            got_fractional = true;
                         }
-                    } else {
-                        panic!("malformed number");
+                        if !got_fractional { panic!("malformed number"); }
+                        tokens.push(Token::Float(digits.parse().unwrap()));
                     }
-                }
-
-                if is_float {
-                    tokens.push(Token::Float(digits.parse().unwrap()));
                 } else {
                     tokens.push(Token::Int(digits.parse().unwrap()));
                 }
@@ -116,6 +122,10 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "print" => tokens.push(Token::Print),
                     "if" => tokens.push(Token::If),
                     "else" => tokens.push(Token::Else),
+                    "while" => tokens.push(Token::While),
+                    "for" => tokens.push(Token::For),
+                    "in" => tokens.push(Token::In),
+                    "by" => tokens.push(Token::By),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
             },

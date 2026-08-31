@@ -8,7 +8,7 @@ pub enum Token {
     Int(i64), Float(f64), True, False, Identifier(String),
 
     // Arithmetic operators
-    Plus, Minus, Star, Slash, Modulo,
+    Plus, Minus, Star, Slash, Modulo, PlusEqual, MinusEqual, StarEqual, SlashEqual, ModuloEqual,
 
     // Comparison operators
     Less, Greater, LessEqual, GreaterEqual, EqualEqual, NotEqual,
@@ -17,7 +17,7 @@ pub enum Token {
     Not,
 
     // Keywords
-    Let, Const, Print, If, Else,
+    Let, Const, Print, If, Else, While, For, In, By, DotDot, DotDotEqual,
 
     // Type keywords,
     IntType, FloatType, BoolType,

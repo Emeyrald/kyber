@@ -123,9 +123,46 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
                 _ => panic!("expected boolean for condition"),
             }
         },
+        Stmt::While { condition, body } => {
+            loop {
+                let condition_value = eval(condition, env);
+                match condition_value {
+                    Value::Bool(b) => {
+                        if b {
+                            eval_block(body, env);
+                        } else {
+                            break;
+                        }
+                    },
+                    _ => panic!("expected boolean for condition"),
+                }
+            }
+        },  
+        Stmt::For { var, start, inclusive, end, step, body } => {
+            let start_int = eval_int(start, env, "start");
+            let end_int = eval_int(end, env, "end");
+            let step_int = match step {
+                Some(e) => eval_int(e, env, "step"),
+                None => 1,
+            };
+            if step_int == 0 { panic!("step amount cannot be 0 in for loop"); }
+
+            env.push_scope();
+
+            let mut counter = start_int;
+            env.define(var.clone(), Variable::new(Value::Int(start_int), true, Type::Int));
+            while should_continue(counter, end_int, step_int, *inclusive) {
+                env.assign(var.clone(), Value::Int(counter));
+                eval_block(body, env);
+                counter += step_int;
+            }
+
+            env.pop_scope();
+
+        },
         Stmt::Block(statements) => {
             eval_block(statements, env);
-        }
+        },
         Stmt::Print(expr) => println!("{}", eval(expr, env)),
         Stmt::Expr(expr) => { eval(expr, env); },
     }
@@ -139,11 +176,26 @@ fn eval_block(statements: &[Stmt], env: &mut Environment) {
     env.pop_scope();
 }
 
+fn eval_int(expr: &Expr, env: &Environment, context: &str) -> i64 {
+    match eval(expr, env) {
+        Value::Int(n) => n,
+        _ => panic!("for loop {} must be an integer", context),
+    }
+}
+
 // Converts a Value to f64 for the float-promotion path: ints widen, floats pass through.
 fn to_f64(v: &Value) -> f64 {
     match v {
         Value::Int(n) => *n as f64,
         Value::Float(f) => *f,
         _ => panic!("expected int or float"),
+    }
+}
+
+fn should_continue(counter: i64, end: i64, step: i64, inclusive: bool) -> bool {
+    if step > 0 {
+        if inclusive { counter <= end } else { counter < end }
+    } else {
+        if inclusive { counter >= end } else { counter > end }
     }
 }

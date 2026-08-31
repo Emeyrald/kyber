@@ -51,6 +51,18 @@ pub enum Stmt {
         then_branch: Vec<Stmt>,
         else_branch: Option<Box<Stmt>>,
     },
+    While {
+        condition: Expr,
+        body: Vec<Stmt>,
+    },
+    For {
+        var: String,
+        start: Expr,
+        inclusive: bool,
+        end: Expr,
+        step: Option<Expr>,
+        body: Vec<Stmt>,
+    },
 
     Block(Vec<Stmt>),
     Print(Expr),
