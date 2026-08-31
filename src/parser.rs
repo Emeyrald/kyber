@@ -65,21 +65,28 @@ impl Parser {
                 Stmt::Declaration { is_mutable, declared_type, name, value: expr }
             },
             &Token::Identifier(_) => {
-                if self.tokens[self.position + 1] == Token::Equals {
-                    let name = match self.advance() {
-                        Token::Identifier(name) => name,
-                        _ => panic!("expected variable name"),
-                    };
-                    self.expect(Token::Equals);
-                    let expr = self.parse_comparison();
-                    self.expect(Token::Semicolon);
-
-                    Stmt::Assignment { name, value: expr }
+                let name = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => panic!("expected variable name"),
+                };
+                let op: Option<BinOp> = match self.peek() {
+                    Token::Equals => None,
+                    Token::PlusEqual => Some(BinOp::Add),
+                    Token::MinusEqual => Some(BinOp::Subtract),
+                    Token::StarEqual => Some(BinOp::Multiply),
+                    Token::SlashEqual => Some(BinOp::Divide),
+                    Token::ModuloEqual => Some(BinOp::Modulo),
+                    _ => panic!("expected assignment operator"),
+                };
+                self.advance();
+                let rhs = self.parse_comparison();
+                self.expect(Token::Semicolon);
+                let value = if let Some(binop) = op {
+                    Expr::Binary(binop, Box::new(Expr::Variable(name.clone())), Box::new(rhs))
                 } else {
-                    let expr = self.parse_comparison();
-                    self.expect(Token::Semicolon);
-                    Stmt::Expr(expr)
-                }
+                    rhs
+                };
+                Stmt::Assignment { name, value }
             },
             &Token::Print => {
                 self.advance();
@@ -231,7 +238,7 @@ impl Parser {
                 }
             },
             Token::Identifier(name) => Expr::Variable(name),
-            _ => panic!("expected number or '(', found {:?}", self),
+            other => panic!("expected number or '(', found {:?}", other),
         }
     }
 
