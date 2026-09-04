@@ -1,10 +1,6 @@
-// Environment: runtime variable storage as a stack of scopes. Each scope is a name→Variable map; 
-// entering a block pushes a scope, exiting pops it. Lookups and assignments search innermost-outward for lexical scoping.
-
 use crate::value::{Value, Type};
 use std::collections::HashMap;
 
-// A bound variable's storage: its current value, whether it's reassignable (let vs const), and its declared type (for type checking).
 pub struct Variable {
     value: Value,
     is_mutable: bool,
@@ -22,30 +18,43 @@ impl Variable {
 }
 
 pub struct Environment {
-    scopes: Vec<HashMap<String, Variable>>,
+    globals: Vec<HashMap<String, Variable>>,
+    call_stack: Vec<Frame>,
+    functions: HashMap<String, Value>,
 }  
+
+struct Frame {
+    scopes: Vec<HashMap<String, Variable>>,
+}
 
 impl Environment {
     pub fn new() -> Self {
         Self {
-            scopes: vec![HashMap::new()],
+            globals: vec![HashMap::new()],
+            call_stack: Vec::new(),
+            functions: HashMap::new(),
         }
     }
 
-    // get/assign search scopes innermost-outward; define inserts into the innermost scope.
     pub fn get(&self, name: &str) -> Value {
-        for scope in self.scopes.iter().rev() {
+        if let Some(frame) = self.call_stack.last() {
+            for scope in frame.scopes.iter().rev() {
+                if let Some(var) = scope.get(name) {
+                    return var.value.clone();
+                }
+            }
+        }
+
+        for scope in self.globals.iter().rev() {
             if let Some(var) = scope.get(name) {
-                // Clone because the caller gets an owned Value while the environment keeps its copy.
                 return var.value.clone();
             }
         }
-        // Undefined variable is a panic for now; becomes a graceful error once Result-based error handling is added.
         panic!("undefined variable: {}", name);
     }
 
     pub fn define(&mut self, name: String, var: Variable) {
-        let current_scope = self.scopes.last_mut().unwrap();
+        let current_scope = self.current_scopes_mut().last_mut().unwrap();
         if current_scope.contains_key(&name) {
             panic!("variable {} is already declared in this scope", name);
         }
@@ -53,10 +62,19 @@ impl Environment {
         
     }
 
-    // Reassignment: find the nearest scope with the name, enforce mutability and type, update in place. 
-    // Errors if const or undeclared.
     pub fn assign(&mut self, name: String, new_value: Value) {
-        for scope in self.scopes.iter_mut().rev() {
+        if let Some(frame) = self.call_stack.last_mut() {
+            for scope in frame.scopes.iter_mut().rev() {
+                if let Some(var) = scope.get_mut(&name) {
+                    if !var.is_mutable { panic!("variable {} is const and cannot be reassigned", name) }
+                    let checked = var.declared_type.check_and_convert(&name, new_value);
+                    var.value = checked;
+                    return;
+                }
+            }
+        }
+
+        for scope in self.globals.iter_mut().rev() {
             if let Some(var) = scope.get_mut(&name) {
                 if !var.is_mutable { panic!("variable {} is const and cannot be reassigned", name) }
                 let checked = var.declared_type.check_and_convert(&name, new_value);
@@ -68,10 +86,38 @@ impl Environment {
     }
 
     pub fn push_scope(&mut self) {
-        self.scopes.push(HashMap::new());
+        self.current_scopes_mut().push(HashMap::new());
     }
 
     pub fn pop_scope(&mut self) {
-        self.scopes.pop();
+        self.current_scopes_mut().pop();
+    }
+
+    pub fn push_frame(&mut self) {
+        self.call_stack.push(Frame { scopes: vec![HashMap::new()] });
+    }
+
+    pub fn pop_frame(&mut self) {
+        self.call_stack.pop();
+    }
+
+    fn current_scopes_mut(&mut self) -> &mut Vec<HashMap<String, Variable>> {
+        if let Some(frame) = self.call_stack.last_mut() {
+            &mut frame.scopes
+        } else {
+            &mut self.globals
+        }
+    }
+
+    pub fn define_function(&mut self, name: String, func: Value) {
+        if self.functions.contains_key(&name) { panic!("function {} is already declared in this scope", name); }
+        self.functions.insert(name, func);
+    }
+
+    pub fn get_function(&self, name: &str) -> Value {
+        if let Some(func) = self.functions.get(name) {
+            return func.clone();
+        }
+        panic!("undefined function: {}", name);
     }
 }

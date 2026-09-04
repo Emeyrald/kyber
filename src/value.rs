@@ -1,6 +1,13 @@
 // Value: a runtime value in Kyber (the result of evaluation). Type: the declared kind of a variable. Value = actual contents, Type = the annotation.
 
 use std::fmt;
+use crate::ast::Stmt;
+
+#[derive(Debug, Clone)]
+pub struct Param {
+    pub name: String,
+    pub param_type: Type,
+}
 
 // Clone (not Copy) so it survives gaining a String variant later, which can't be Copy.
 #[derive(Debug, Clone)]
@@ -8,6 +15,13 @@ pub enum Value {
     Int(i64),
     Float(f64),
     Bool(bool),
+    Void,
+
+    Function {
+        parameters: Vec<Param>,
+        return_type: Type,
+        body: Vec<Stmt>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -15,6 +29,7 @@ pub enum Type {
     Int,
     Float,
     Bool,
+    Void,
 }
 
 // Whole-number floats (5.0) print with a trailing .0 so the type is visible in output; ints never show a decimal. Fractional floats print as-is.
@@ -31,6 +46,7 @@ impl fmt::Display for Value {
                 }             
             },
             Value::Bool(b) => write!(f, "{}", b),
+            _ => Ok(()),
         }
     }
 }

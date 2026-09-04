@@ -24,3 +24,11 @@ while (i <= 5) {
     i = i + 1;
 }
 print(factorial);   // 120
+
+def countdown(int n) -> void {
+    print(n);
+    if (n > 0) {
+        countdown(n - 1);
+    }
+}
+countdown(3);
