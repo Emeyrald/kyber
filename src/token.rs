@@ -17,7 +17,7 @@ pub enum Token {
     Not,
 
     // Keywords
-    Let, Const, If, Else, While, For, In, By, Def, Return,
+    Let, Const, If, Else, While, For, In, By, Def, Return, Break, Continue,
     Print, // Remove later onces built in functions are added
 
     // Type keywords,

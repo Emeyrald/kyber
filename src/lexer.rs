@@ -143,6 +143,8 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "by" => tokens.push(Token::By),
                     "def" => tokens.push(Token::Def),
                     "return" => tokens.push(Token::Return),
+                    "break" => tokens.push(Token::Break),
+                    "continue" => tokens.push(Token::Continue),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
             },
