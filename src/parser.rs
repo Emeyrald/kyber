@@ -64,7 +64,7 @@ impl Parser {
 
                 Stmt::Declaration { is_mutable, declared_type, name, value: expr }
             },
-            &Token::Identifier(_) => {
+            &Token::Identifier(_) if Self::is_assignment_op(&self.tokens[self.position + 1]) => {
                 let name = match self.advance() {
                     Token::Identifier(name) => name,
                     _ => panic!("expected variable name"),
@@ -299,6 +299,7 @@ impl Parser {
                                 break;
                             }
                         }
+                        self.expect(Token::RightParen);
                         Expr::Call { name, arguments }
                     },
                     _ => Expr::Variable(name),
@@ -325,5 +326,13 @@ impl Parser {
         if actual != expected {
             panic!("expected {:?}, found {:?}", expected, actual);
         }
+    }
+
+    fn is_assignment_op(token: &Token) -> bool {
+        matches!(
+            token, 
+            Token::Equals | Token::PlusEqual | Token::MinusEqual 
+            | Token::StarEqual | Token::SlashEqual | Token::ModuloEqual
+        )
     }
 }

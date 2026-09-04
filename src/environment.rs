@@ -114,7 +114,7 @@ impl Environment {
         self.functions.insert(name, func);
     }
 
-    pub fn get_function(&mut self, name: &str) -> Value {
+    pub fn get_function(&self, name: &str) -> Value {
         if let Some(func) = self.functions.get(name) {
             return func.clone();
         }

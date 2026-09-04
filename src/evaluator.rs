@@ -8,9 +8,35 @@ use crate::environment::{Environment, Variable};
 
 // Recursion over the tree: leaves (Int/Float/Variable) produce values directly; Binary/Unary evaluate children then combine. 
 // Tree shape = order of operations.
-pub fn eval(expr: &Expr, env: &Environment) -> Value {
+pub fn eval(expr: &Expr, env: &mut Environment) -> Value {
     match expr {
-        Expr::Call { name, arguments } => panic!("calls not implemented yet"),
+        Expr::Call { name, arguments } => {
+            let function = env.get_function(name).clone();
+            let arg_values: Vec<Value> = arguments.iter().map(|arg| eval(arg, env)).collect();
+
+            match function {
+                Value::Function { parameters, return_type, body } => {
+                    let num_params = parameters.len();
+                    let num_args = arg_values.len();
+                    if num_params != num_args { panic!("wrong number of arguments for {name}. expected {num_params}, got {num_args}"); }
+
+                    env.push_frame();
+
+                    for (param, arg_value) in parameters.iter().zip(arg_values) {
+                        let checked_value = param.param_type.check_and_convert(&param.name, arg_value);
+                        env.define(param.name.clone(), Variable::new(checked_value, true, param.param_type.clone()));
+                    }
+
+                    for statement in body {
+                        eval_stmt(&statement, env);
+                    }
+
+                    env.pop_frame();
+                    Value::Void // temporary until I implement return
+                },
+                _ => panic!("{} is not a function", name),
+            }
+        },
 
         Expr::Int(n) => Value::Int(*n),
         Expr::Float(f) => Value::Float(*f),
@@ -186,7 +212,7 @@ fn eval_block(statements: &[Stmt], env: &mut Environment) {
     env.pop_scope();
 }
 
-fn eval_int(expr: &Expr, env: &Environment, context: &str) -> i64 {
+fn eval_int(expr: &Expr, env: &mut Environment, context: &str) -> i64 {
     match eval(expr, env) {
         Value::Int(n) => n,
         _ => panic!("for loop {} must be an integer", context),
