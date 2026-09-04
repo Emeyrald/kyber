@@ -192,6 +192,25 @@ impl Parser {
 
                 Stmt::FunctionDef { name: function_name, parameters, return_type, body }
             },
+            &Token::Return => {
+                self.advance();
+                let result: Option<Expr> = match self.peek() {
+                    Token::Semicolon => None,
+                    _ => Some(self.parse_comparison())
+                };
+                self.expect(Token::Semicolon);
+                Stmt::Return(result)
+            },
+            &Token::Break => {
+                self.advance();
+                self.expect(Token::Semicolon);
+                Stmt::Break
+            },
+            &Token::Continue => {
+                self.advance();
+                self.expect(Token::Semicolon);
+                Stmt::Continue
+            },
             _ => {
                 let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);

@@ -56,9 +56,11 @@ impl Type {
     // errors on narrowing (float->int) or type mismatch. Used by both declaration and reassignment.
     pub(crate) fn check_and_convert(&self, name: &str, value: Value) -> Value {
         match (self, &value) {
-            (Type::Int, Value::Int(_)) | (Type::Float, Value::Float(_)) | (Type::Bool, Value::Bool(_)) => value,
+            (Type::Int, Value::Int(_)) | (Type::Float, Value::Float(_)) | (Type::Bool, Value::Bool(_)) | (Type::Void, Value::Void) => value,
             (Type::Float, Value::Int(n)) => Value::Float(*n as f64),
             (Type::Int, Value::Float(_)) => panic!("cannot assign float to int variable {} (use a cast to truncate)", name),
+            (Type::Void, _) => panic!("void function cannot return a value"),
+            (_, Value::Void) => panic!("non-void function didn't return a value"),
             _ => panic!("type mismatch: cannot assign to {:?} variable {}", self, name),
         }
     }

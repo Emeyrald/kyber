@@ -78,4 +78,7 @@ pub enum Stmt {
     Block(Vec<Stmt>),
     Print(Expr),
     Expr(Expr),
+    Return(Option<Expr>),
+    Break,
+    Continue,
 }
