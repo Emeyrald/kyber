@@ -10,55 +10,38 @@ pub fn tokenize(source: &str) -> Vec<Token> {
     let mut chars = source.chars().peekable();
     while let Some(ch) = chars.next() {
         match ch {
-            '+' => {
-                if let Some('=') = chars.peek() {
-                    chars.next();
-                    tokens.push(Token::PlusEqual);
-                } else {
-                    tokens.push(Token::Plus);
-                }
+            '+' => match chars.peek() {
+                Some('=') => { chars.next(); tokens.push(Token::PlusEqual) },
+                _ => tokens.push(Token::Plus),
             },
-            '-' => {
-               if let Some('=') = chars.peek() {
-                    chars.next();
-                    tokens.push(Token::MinusEqual);
-                } else {
-                    tokens.push(Token::Minus);
-                } 
+            '-' => match chars.peek() {
+                Some('=') => { chars.next(); tokens.push(Token::MinusEqual) },
+                Some('>') => { chars.next(); tokens.push(Token::Arrow) },
+                _ => tokens.push(Token::Minus),
             },
-            '*' => {
-                if let Some('=') = chars.peek() {
-                    chars.next();
-                    tokens.push(Token::StarEqual);
-                } else {
-                    tokens.push(Token::Star);
-                }
+            '*' => match chars.peek() {
+                Some('=') => { chars.next(); tokens.push(Token::StarEqual) },
+                _ => tokens.push(Token::Star),
             },
-            '/' => {
-                if let Some('/') = chars.peek() {
+            '/' => match chars.peek() {
+                Some('/') => {
                     while let Some(c) = chars.peek() {
                         if *c == '\n' { break; }
                         chars.next();
                     }
-                } else if let Some ('=') = chars.peek() {
-                    chars.next();
-                    tokens.push(Token::SlashEqual);
-                } else {
-                    tokens.push(Token::Slash);
-                }
+                },
+                Some('=') => { chars.next(); tokens.push(Token::SlashEqual) },
+                _ => tokens.push(Token::Slash),
             },
-            '%' => {
-                if let Some('=') = chars.peek() {
-                    chars.next();
-                    tokens.push(Token::ModuloEqual);
-                } else {
-                    tokens.push(Token::Modulo);
-                }
+            '%' => match chars.peek() {
+                Some('=') => { chars.next(); tokens.push(Token::ModuloEqual) },
+                _ => tokens.push(Token::Modulo),
             },
             '(' => tokens.push(Token::LeftParen),
             ')' => tokens.push(Token::RightParen),
             '{' => tokens.push(Token::LeftBrace),
             '}' => tokens.push(Token::RightBrace),
+            ',' => tokens.push(Token::Comma),
 
             // Numbers span multiple chars, so gobble consecutive digits. 
             // A '.' followed by more digits makes it a float; '3.' or '.5' are rejected (must be 3.0 / 0.5).
@@ -148,6 +131,7 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "int" => tokens.push(Token::IntType),
                     "float" => tokens.push(Token::FloatType),
                     "bool" => tokens.push(Token::BoolType),
+                    "void" => tokens.push(Token::VoidType),
                     "true" => tokens.push(Token::True),
                     "false" => tokens.push(Token::False),
                     "print" => tokens.push(Token::Print),
@@ -157,6 +141,8 @@ pub fn tokenize(source: &str) -> Vec<Token> {
                     "for" => tokens.push(Token::For),
                     "in" => tokens.push(Token::In),
                     "by" => tokens.push(Token::By),
+                    "def" => tokens.push(Token::Def),
+                    "return" => tokens.push(Token::Return),
                     _ => tokens.push(Token::Identifier(identifier_string)),
                 }
             },

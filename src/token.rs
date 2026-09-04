@@ -17,13 +17,14 @@ pub enum Token {
     Not,
 
     // Keywords
-    Let, Const, Print, If, Else, While, For, In, By, DotDot, DotDotEqual,
+    Let, Const, If, Else, While, For, In, By, Def, Return,
+    Print, // Remove later onces built in functions are added
 
     // Type keywords,
-    IntType, FloatType, BoolType,
+    IntType, FloatType, BoolType, VoidType,
 
     // Punctuation / delimiters
-    LeftParen, RightParen, Equals, Semicolon, LeftBrace, RightBrace,
+    LeftParen, RightParen, Equals, Semicolon, LeftBrace, RightBrace, DotDot, DotDotEqual, Arrow, Comma,
 
     // Special
     Eof,

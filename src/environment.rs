@@ -23,12 +23,14 @@ impl Variable {
 
 pub struct Environment {
     scopes: Vec<HashMap<String, Variable>>,
+    functions: HashMap<String, Value>,
 }  
 
 impl Environment {
     pub fn new() -> Self {
         Self {
             scopes: vec![HashMap::new()],
+            functions: HashMap::new(),
         }
     }
 
@@ -73,5 +75,18 @@ impl Environment {
 
     pub fn pop_scope(&mut self) {
         self.scopes.pop();
+    }
+
+    pub fn define_function(&mut self, name: String, func: Value) {
+        if self.functions.contains_key(&name) { panic!("function {} is already declared in this scope", name); }
+        self.functions.insert(name, func);
+    }
+
+    pub fn get_function(&mut self, name: &str) -> Value {
+        if let Some(func) = self.functions.get(name) {
+            return func.clone();
+        }
+        panic!("undefined function: {}", name);
+        
     }
 }

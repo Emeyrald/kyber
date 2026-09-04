@@ -2,7 +2,7 @@
 
 use crate::token::Token;
 use crate::ast::{Stmt, Expr, BinOp, UnaryOp};
-use crate::value::Type;
+use crate::value::{Type, Param};
 
 #[derive(Debug)]
 pub struct Parser {
@@ -145,6 +145,53 @@ impl Parser {
                 let body = self.parse_block();
                 Stmt::For { var, start, inclusive, end, step, body }
             },
+            &Token::Def => {
+                self.advance();
+                let function_name = match self.advance() {
+                    Token::Identifier(name) => name,
+                    _ => panic!("expected function name after 'def'"),
+                };
+                self.expect(Token::LeftParen);
+
+                let mut parameters: Vec<Param> = Vec::new();
+                while self.peek() != &Token::RightParen {
+                    let param_type = match self.advance() {
+                        Token::IntType => Type::Int,
+                        Token::FloatType => Type::Float,
+                        Token::BoolType => Type::Bool,
+                        Token::VoidType => panic!("cannot use void as a parameter type"),
+                        _ => panic!("expected parameter type"),
+                    };
+                    let param_name = match self.advance() {
+                        Token::Identifier(name) => name,
+                        _ => panic!("expected parameter name after parameter type"),
+                    };
+                    parameters.push(Param {
+                        name: param_name,
+                        param_type,
+                    });
+                    
+                    if self.peek() == &Token::Comma {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
+                self.expect(Token::RightParen);
+
+                self.expect(Token::Arrow);
+                let return_type = match self.advance() {
+                    Token::IntType => Type::Int,
+                    Token::FloatType => Type::Float,
+                    Token::BoolType => Type::Bool,
+                    Token::VoidType => Type::Void,
+                    _ => panic!("expected return type"),
+                };
+                
+                let body = self.parse_block();
+
+                Stmt::FunctionDef { name: function_name, parameters, return_type, body }
+            },
             _ => {
                 let expr = self.parse_comparison();
                 self.expect(Token::Semicolon);
@@ -229,7 +276,7 @@ impl Parser {
             Token::True => Expr::Bool(true),
             Token::False => Expr::Bool(false),
 
-            // Parens don't become a node — they only force grouping, which the tree shape already captures. Returns the inner expression directly.
+            // Parens don't become a node - they only force grouping, which the tree shape already captures. Returns the inner expression directly.
             Token::LeftParen => {
                 let inner = self.parse_comparison();
                 match self.advance() {
@@ -237,7 +284,26 @@ impl Parser {
                     _ => panic!("expected ')'"),
                 }
             },
-            Token::Identifier(name) => Expr::Variable(name),
+            Token::Identifier(name) => {
+                match self.peek() {
+                    Token::LeftParen => {
+                        self.expect(Token::LeftParen);
+                        let mut arguments: Vec<Expr> = Vec::new();
+                        while self.peek() != &Token::RightParen {
+                            let arg = self.parse_comparison();
+                            arguments.push(arg);
+                            
+                            if self.peek() == &Token::Comma {
+                                self.advance();
+                            } else {
+                                break;
+                            }
+                        }
+                        Expr::Call { name, arguments }
+                    },
+                    _ => Expr::Variable(name),
+                }
+            },
             other => panic!("expected number or '(', found {:?}", other),
         }
     }

@@ -10,6 +10,8 @@ use crate::environment::{Environment, Variable};
 // Tree shape = order of operations.
 pub fn eval(expr: &Expr, env: &Environment) -> Value {
     match expr {
+        Expr::Call { name, arguments } => panic!("calls not implemented yet"),
+
         Expr::Int(n) => Value::Int(*n),
         Expr::Float(f) => Value::Float(*f),
         Expr::Bool(b) => Value::Bool(*b),
@@ -159,6 +161,14 @@ pub fn eval_stmt(stmt: &Stmt, env: &mut Environment) {
 
             env.pop_scope();
 
+        },
+        Stmt::FunctionDef { name, parameters, return_type, body } => {
+            let function = Value::Function {
+                parameters: parameters.clone(),
+                return_type: return_type.clone(),
+                body: body.clone(),
+            };
+            env.define_function(name.clone(), function);
         },
         Stmt::Block(statements) => {
             eval_block(statements, env);
