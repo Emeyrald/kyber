@@ -13,18 +13,25 @@ use crate::parser::Parser;
 use crate::environment::Environment;
 
 use std::io::Write;
+use std::path::Path;
 
 fn main() {
     let args = std::env::args().collect::<Vec<String>>();
     let mut env = Environment::new();
     match args.get(1) {
         Some(path) => {
+            let extension = Path::new(path).extension();
+            match extension {
+                Some(ext) if ext == "ky" => {},
+                _ => panic!("expected a .ky file")
+            }
+            
             let file = std::fs::read_to_string(path).expect("could not read file");
             run(&file, &mut env);
         },
         None => {
             // Read-Eval-Print-Loop: prompt, read a line, run it, repeat. 'exit' breaks. 
-            // (Note: bad input currently panics and kills the loop — fixed when adding error handling.)
+            // (Note: bad input currently panics and kills the loop - fixed when adding error handling.)
             loop {
                 print!("> ");
                 // print! doesn't flush automatically, so flush to make the prompt appear before reading input.
